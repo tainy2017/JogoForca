@@ -1,0 +1,355 @@
+###################################################################################################################################
+#                                      UNIVERSIDADE FEDERAL DE SERGIPE                                                            #
+#                                   DEPARTAMENTO DE SISTEMAS DE INFORMAÇÃO                                                        #
+#                                             CAMPUS ITABAIANA                                                                    # 
+#                                      PROJETO ASSEMBLY: JOGO DA FORCA                                                            #
+#                                     DISCENTES: CLOVIJAN BISPO                                                                   #
+#                                                MAGDA AMARAL                                                                     #
+###################################################################################################################################
+.data
+
+usadas: .space 50
+linha: .asciiz "-"
+win: .ascii "\|/ "
+win2: .asciiz "WELL PLAYED"
+loose2: .asciiz "Você perdeu!'"
+nl: .asciiz "\n"
+sp: .asciiz " "
+array: .asciiz "corona"
+array2: .space 50
+words: .space 1
+spaces: .asciiz "\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n"
+texto: .asciiz "Quantidade de vidas: "
+texto1: .asciiz "Digite uma letra: "
+head: .asciiz "  0"
+torso: .asciiz "\n  |"
+left: .asciiz "./"
+right: .asciiz "\."
+fig: .asciiz "  0 \n./|\. \n  | \n./ \."
+creditos: .asciiz "Forca - Projeto Final OAC 2020.1 "
+titulo: .asciiz "Seja bem vindo ao jogo da Forca"
+inicio: .asciiz "Vamos começar!"
+
+.text
+exibetitulo:
+#Exibe título do jogo
+la $a0,titulo
+li $v0,4
+syscall
+
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,inicio
+li $v0,4
+syscall
+
+read:  
+li $s2,0
+la $a0,array
+la $a1,49
+la $t0,array
+la $t1,array2
+
+count:
+lb $s0,($t0)
+blt $s0,61,pregame
+add $t0,$t0,1
+add $s2,$s2,1 #s2 - número de letras
+j count
+
+pregame:
+la $a0,spaces
+li $v0,4
+syscall
+la $a0,spaces
+li $v0,4
+syscall
+la $a0,spaces
+li $v0,4
+syscall
+
+mistery:
+beq $s6,$s2,GAME
+la $t9,linha
+lb $t8,($t9)
+sb $t8,($t1)
+add $t1,$t1,1
+add $s6,$s6,1
+j mistery
+
+GAME:
+la $a0,array2
+li $v0,4
+syscall
+
+li $s4,1 #//decider for lifes
+li $s6,0 #contador s6, s2 numero de letras
+li $t4,7 #vidas t4
+la $t0,array
+la $t1,array2
+lb $s0,($t0)
+lb $s1,($t1)
+la $t2,linha
+lb $t3,($t2) #t3 = " - "
+la $t5,usadas #t5 = array de usadas
+
+in:
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,texto1
+li $v0,4
+syscall
+
+la $a0,words
+li $v0,8
+syscall
+
+lb $s7,($a0) #letra introduzida = $s8
+sb $s7,($t5)
+li $s4,1
+li $s6,0
+la $t1,array2
+
+verify: #introduzida pertence? --> para saber se desconta ou não uma vida
+bne $s7,$s0,next
+hit:
+li $s4,0 #introduzida pertence!
+sb $s7,($t1)
+add $t0,$t0,1
+add $t1,$t1,1
+lb $s0,($t0)
+lb $s1,($t1)
+add $s6,$s6,1
+beq $s6,$s2,letters
+j verify
+
+next:
+add $t0,$t0,1
+add $t1,$t1,1
+lb $s0,($t0)
+lb $s1,($t1)
+add $s6,$s6,1
+beq $s6,$s2,letters
+j verify
+
+letters:
+li $s6,0 #contador  
+li $t7,0 #nº de letras usadas
+la $t0,array
+la $t1,array2
+lb $s1,($t1)
+lb $s0,($t0)
+
+used:
+blt $s5,61,checkwin #conta número letras usadas! $t7
+add $t7,$t7,1
+add $t5,$t5,1
+lb $s5,($t5)
+j used
+
+checkwin:
+beq $s1,$t3,lifes
+beq $s6,$s2,end1
+add $t1,$t1,1
+lb $s1,($t1)
+add $s6,$s6,1
+j checkwin
+
+lifes:
+bne $s4,0,loose #s4 = 0 --> acertou letra introduzida
+lifes1: beq $t4,1,vida5
+beq $t4,2,vida4
+beq $t4,3,vida3
+beq $t4,4,vida2
+beq $t4,5,vida1
+
+printer:
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,array2
+li $v0,4
+syscall
+
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,texto
+li $v0,4
+syscall
+
+move $a0,$t4
+li $v0,1
+syscall
+
+add $t5,$t5,1 #prepara posição para a próxima letra introduzida
+j in
+
+loose:
+beq $t4,0,end2
+sub $t4,$t4,1
+j lifes1
+
+
+end1:
+la $a0,nl
+li $v0,4
+syscall
+la $a0,nl
+li $v0,4
+syscall
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,win
+li $v0,4
+syscall
+
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,array2
+li $v0,4
+syscall
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,creditos
+li $v0,4
+syscall
+
+li $v0,10
+syscall
+
+end2:  
+la $a0,nl
+li $v0,4
+syscall
+la $a0,nl
+li $v0,4
+syscall
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,loose2
+li $v0,4
+syscall
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,fig
+li $v0,4
+syscall
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,creditos
+li $v0,4
+syscall
+
+li $v0,10
+syscall
+
+vida1:
+la $a0,head
+li $v0,4
+syscall
+j printer
+
+vida2:
+la $a0,head
+li $v0,4
+syscall
+la $a0,torso
+li $v0,4
+syscall
+j printer
+
+vida3:
+la $a0,head
+li $v0,4
+syscall
+
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,left
+li $v0,4
+syscall
+la $a0,torso
+li $v0,4
+syscall
+j printer
+
+vida4:
+la $a0,head
+li $v0,4
+syscall
+
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,left
+li $v0,4
+syscall
+la $a0,sp #espaço
+li $v0,4
+syscall
+la $a0,right
+li $v0,4
+syscall
+la $a0,torso
+li $v0,4
+syscall
+j printer
+
+vida5:
+la $a0,head
+li $v0,4
+syscall
+
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,left
+li $v0,4
+syscall
+la $a0,sp
+li $v0,4
+syscall
+la $a0,right
+li $v0,4
+syscall
+la $a0,torso
+li $v0,4
+syscall
+
+la $a0,nl
+li $v0,4
+syscall
+
+la $a0,left
+li $v0,4
+syscall
+la $a0,sp #espaço
+li $v0,4
+syscall
+la $a0,right
+li $v0,4
+syscall
+j printer
